@@ -11,7 +11,7 @@
 require_once 'config.php';
 
 // ============ CẤU HÌNH GEMINI API ============
-define('GEMINI_API_KEY', 'AIzaSyCuK2AFEUjahvwHyAnhoHhKx-wIVEzRl6M');
+define('GEMINI_API_KEY', '');
 define('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
 
 // ============ CẤU HÌNH RATE LIMITING ============
@@ -2193,3 +2193,4 @@ function getFallbackResponse($message, $role)
     // Default response
     return ['success' => true, 'reply' => "Cảm ơn bạn đã hỏi! 🤔\n\nTôi có thể hỗ trợ bạn về:\n• Hướng dẫn sử dụng hệ thống\n• Giải thích cách tính điểm\n• Quy trình yêu cầu cập nhật\n• Tiêu chí xếp loại, học bổng\n\nBạn có thể hỏi cụ thể hơn để tôi hỗ trợ tốt hơn nhé! 😊"];
 }
+
