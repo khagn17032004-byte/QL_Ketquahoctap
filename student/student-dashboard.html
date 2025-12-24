@@ -1,0 +1,828 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ & Điểm Số - Học Sinh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#265166',
+            secondary: '#547C90',
+            background: '#F6FAFD',
+            accent1: '#F1DCD0',
+            accent2: '#D0F1E6',
+            accent3: '#BACFDA',
+            textDark: '#1E3745',
+            textMuted: '#414A4E',
+            danger: '#CA4C44'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="../assets/js/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="../assets/css/fonts.css">
+  <link rel="stylesheet" href="../assets/css/lucide.css">
+  <script src="../assets/js/lucide.min.js"></script>
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.99);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Nav Indicator Animation */
+    #nav-indicator {
+      position: absolute;
+      right: 0;
+      left: 1rem;
+      background-color: #F6FAFD;
+      border-radius: 2rem 0 0 2rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+    }
+
+    #nav-indicator::before,
+    #nav-indicator::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      width: 2rem;
+      height: 2rem;
+      background-color: transparent;
+      z-index: -1;
+    }
+
+    #nav-indicator::before {
+      top: -2rem;
+      border-radius: 0 0 2rem 0;
+      box-shadow: 1rem 1rem 0 1rem #F6FAFD;
+    }
+
+    #nav-indicator::after {
+      bottom: -2rem;
+      border-radius: 0 2rem 0 0;
+      box-shadow: 1rem -1rem 0 1rem #F6FAFD;
+    }
+
+    .tab-btn {
+      position: relative;
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      color: #000000 !important;
+    }
+  </style>
+</head>
+
+<body class="bg-background text-textDark font-sans">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar"
+      class="w-64 bg-primary flex-shrink-0 hidden lg:flex flex-col h-full transition-all duration-300">
+      <!-- User Profile Section -->
+      <div class="p-6 flex flex-col items-center text-center border-b border-white/10 relative z-20 bg-primary">
+        <div class="h-20 w-20 rounded-3xl bg-white/10 p-1 mb-4">
+          <img src="https://ui-avatars.com/api/?name=Student&background=547C90&color=fff" alt="Avatar"
+            class="h-full w-full object-cover rounded-2xl">
+        </div>
+        <h2 id="userNameSidebar" class="text-white font-semibold text-lg">Học Sinh</h2>
+        <p id="userIdSidebar" class="text-white/60 text-xs mt-1">student@school.edu.vn</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 pt-8 pb-8 pl-4 pr-0 space-y-1 overflow-y-auto custom-scrollbar relative">
+        <!-- Moving Indicator -->
+        <div id="nav-indicator" class="hidden lg:block"></div>
+
+        <button
+          class="tab-btn active w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white font-medium transition"
+          data-tab="profile">
+          <i data-lucide="user" class="w-5 h-5"></i>Thông Tin
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="grades">
+          <i data-lucide="book-open" class="w-5 h-5"></i>Xem Điểm
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="annual">
+          <i data-lucide="trophy" class="w-5 h-5"></i>Điểm Cả Năm
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="ranking">
+          <i data-lucide="medal" class="w-5 h-5"></i>Xếp Hạng
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="schedule">
+          <i data-lucide="calendar" class="w-5 h-5"></i>Thời Khóa Biểu
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="examschedule">
+          <i data-lucide="clipboard-list" class="w-5 h-5"></i>Lịch Thi
+        </button>
+        <button
+          class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-l-2xl text-left text-white/70 hover:bg-white/10 hover:text-white font-medium transition"
+          data-tab="ai-analysis">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>Phân Tích AI
+        </button>
+      </nav>
+
+      <!-- Logout Section -->
+      <div class="p-4 border-t border-white/10">
+        <button id="logoutBtn"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-white/70 hover:bg-danger/20 hover:text-danger font-medium transition">
+          <i data-lucide="log-out" class="w-5 h-5"></i>Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- Header -->
+      <header
+        class="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+        <div class="flex items-center gap-4">
+          <!-- Mobile Menu Button -->
+          <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+          <div>
+            <h1 class="text-xl font-bold text-textDark">Chào buổi sáng, <span id="welcomeName" class="text-primary">Học
+                Sinh</span>!</h1>
+            <p class="text-textMuted text-sm">Hôm nay bạn có lịch học nào không?</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 lg:gap-6">
+          <!-- Notification Bell -->
+          <div class="relative">
+            <button id="notificationBell"
+              class="h-10 w-10 rounded-xl bg-accent2 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 transition relative group">
+              <i data-lucide="bell" class="w-5 h-5"></i>
+              <span id="notificationBadge"
+                class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold border-2 border-white">0</span>
+            </button>
+
+            <!-- Notification Dropdown -->
+            <div id="notificationDropdown"
+              class="hidden absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 max-h-[32rem] overflow-hidden">
+              <div class="flex items-center justify-between px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+                <h3 class="font-bold text-textDark">Thông báo</h3>
+                <button id="markAllReadBtn" class="text-xs text-primary hover:underline font-semibold">Đánh dấu đã
+                  đọc</button>
+              </div>
+              <div id="notificationList" class="overflow-y-auto max-h-96 custom-scrollbar">
+                <div class="p-8 text-center text-textMuted text-sm italic">Đang tải thông báo...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Content -->
+      <main class="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
+        <!-- Tab Contents -->
+        <div id="tab-container" class="fade-in-up">
+          <!-- Profile Tab -->
+          <div id="profile-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Student Card -->
+              <div class="lg:col-span-1">
+                <div class="rounded-2xl border border-slate-200 bg-white/80 p-6">
+                  <div class="text-center mb-6">
+                    <div id="profileAvatar"
+                      class="h-20 w-20 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 mx-auto flex items-center justify-center text-3xl font-bold text-slate-950">
+                      --
+                    </div>
+                    <h2 id="profileName" class="text-xl font-semibold text-slate-900 mt-4">Đang tải...</h2>
+                    <p id="profileClass" class="text-sm text-slate-500 mt-1">...</p>
+                  </div>
+                  <div class="space-y-3 text-sm border-t border-slate-200 pt-4">
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Mã HS:</span>
+                      <span id="profileId" class="font-mono font-semibold">...</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Giới tính:</span>
+                      <span id="profileGender">...</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Ngày sinh:</span>
+                      <span id="profileDob">...</span>
+                    </div>
+                  </div>
+                  <button id="requestUpdateBtn"
+                    class="w-full mt-4 px-4 py-2 rounded-lg border border-sky-600 bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition">
+                    <i class="lucide lucide-edit inline mr-2" style="stroke-width:1.5;"></i>Yêu Cầu Cập Nhật
+                  </button>
+                </div>
+              </div>
+
+              <!-- Full Info -->
+              <div class="lg:col-span-2 space-y-4">
+                <div class="rounded-2xl border border-slate-200 bg-white/80 p-6">
+                  <h3 class="text-lg font-semibold text-slate-900 mb-4">Thông Tin Chi Tiết</h3>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Mã học sinh</label>
+                      <input type="text" id="detailCode" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Họ và tên</label>
+                      <input type="text" id="detailName" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Ngày sinh</label>
+                      <input type="text" id="detailDob" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Giới tính</label>
+                      <input type="text" id="detailGender" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Lớp</label>
+                      <input type="text" id="detailClass" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Năm học</label>
+                      <input type="text" value="2024-2025" disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Dân tộc</label>
+                      <input type="text" id="detailEthnicity" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Quê quán</label>
+                      <input type="text" id="detailHometown" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div class="sm:col-span-2">
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Địa chỉ</label>
+                      <input type="text" id="detailAddress" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Thông tin người thân -->
+                <div class="rounded-2xl border border-slate-200 bg-white/80 p-6">
+                  <h3 class="text-lg font-semibold text-slate-900 mb-4">
+                    <i class="lucide lucide-users inline mr-2 text-sky-400" style="stroke-width:1.5;"></i>Thông Tin
+                    Người Thân
+                  </h3>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Họ tên phụ huynh</label>
+                      <input type="text" id="detailParentName" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Số điện thoại</label>
+                      <input type="text" id="detailParentPhone" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-slate-500 mb-1 uppercase">Email</label>
+                      <input type="text" id="detailParentEmail" value="..." disabled
+                        class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800 text-sm">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white/80 p-6">
+                  <h3 class="text-lg font-semibold text-slate-900 mb-4">Hạnh Kiểm</h3>
+                  <div id="conductInfo" class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-300/50">
+                      <span class="text-slate-500">Học kỳ I:</span>
+                      <span id="conductTerm1"
+                        class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold bg-slate-200 text-slate-600">Chưa
+                        có</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-slate-500">Học kỳ II:</span>
+                      <span id="conductTerm2"
+                        class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold bg-slate-200 text-slate-600">Chưa
+                        có</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grades Tab -->
+          <div id="grades-tab" class="tab-content hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-6 mb-6">
+              <h3 class="text-lg font-semibold text-slate-900 mb-4">Chọn Học Kỳ</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm text-slate-500 mb-2">Năm học</label>
+                  <select id="gradeYearSelect"
+                    class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800">
+                    <option value="2024-2025">2024-2025</option>
+                    <option value="2023-2024">2023-2024</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-500 mb-2">Học kỳ</label>
+                  <select id="gradeTermSelect"
+                    class="w-full bg-slate-50 border border-slate-300/50 rounded-lg px-3 py-2 text-slate-800">
+                    <option value="1">Học kỳ I</option>
+                    <option value="2">Học kỳ II</option>
+                  </select>
+                </div>
+                <div class="flex items-end gap-2">
+                  <button id="viewGradesBtn"
+                    class="flex-1 bg-sky-600 border border-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                    Xem Điểm
+                  </button>
+                  <button id="exportGradesBtn"
+                    class="bg-emerald-600 border border-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2"
+                    title="Xuất Excel">
+                    <i class="lucide lucide-download" style="stroke-width:1.5;"></i>
+                    <span class="hidden sm:inline">Excel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grades Table -->
+            <div class="rounded-2xl border border-slate-200 bg-white/80 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-slate-50/80 border-b border-slate-200/50">
+                    <tr>
+                      <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Môn học</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Miệng</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">15 phút</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">1 tiết</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Giữa Kỳ</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cuối Kỳ</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Trung bình</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Xếp loại</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gradesTableBody" class="divide-y divide-slate-800/50">
+                    <tr>
+                      <td colspan="8" class="text-center px-4 py-8 text-slate-500">Nhấn "Xem Điểm" để tải bảng điểm</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Summary Row -->
+              <div class="border-t border-slate-200/50 bg-slate-50 px-4 py-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Điểm trung bình học kỳ:</span>
+                  <span id="semesterAvg" class="text-2xl font-bold text-emerald-400">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Annual Scores Tab -->
+          <div id="annual-tab" class="tab-content hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-6 mb-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900 mb-1">
+                    <i class="lucide lucide-trophy inline mr-2 text-amber-400" style="stroke-width:1.5;"></i>
+                    Kết Quả Học Tập Cả Năm
+                  </h3>
+                  <p class="text-sm text-slate-500">Điểm trung bình môn cả năm = (TBM HK1 + TBM HK2 × 2) / 3</p>
+                </div>
+                <div class="flex gap-2">
+                  <button id="loadAnnualBtn"
+                    class="bg-amber-600 border border-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition">
+                    <i class="lucide lucide-refresh-cw inline mr-2" style="stroke-width:1.5;"></i>Tải Lại
+                  </button>
+                  <button id="exportAnnualBtn"
+                    class="bg-emerald-600 border border-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg transition"
+                    title="Xuất Excel">
+                    <i class="lucide lucide-download inline mr-2" style="stroke-width:1.5;"></i>Excel
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Annual Scores Table -->
+            <div class="rounded-2xl border border-slate-200 bg-white/80 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-slate-50/80 border-b border-slate-200/50">
+                    <tr>
+                      <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Môn Học</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">TBM HK1</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">TBM HK2</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-amber-400 uppercase">TBM Cả Năm</th>
+                      <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Xếp Loại</th>
+                    </tr>
+                  </thead>
+                  <tbody id="annualScoresTableBody" class="divide-y divide-slate-800/50">
+                    <tr>
+                      <td colspan="5" class="text-center px-4 py-8 text-slate-500">Đang tải dữ liệu...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Summary -->
+              <div class="border-t border-slate-200/50 bg-slate-50 px-4 py-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p class="text-slate-500 text-xs uppercase mb-1">TBC Năm</p>
+                    <p id="annualAvg" class="text-2xl font-bold text-amber-400">-</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs uppercase mb-1">Xếp Loại HL</p>
+                    <p id="annualRank" class="text-lg font-semibold text-emerald-400">-</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs uppercase mb-1">Hạnh Kiểm Năm</p>
+                    <p id="annualConduct" class="text-lg font-semibold text-sky-400">-</p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500 text-xs uppercase mb-1">Danh Hiệu</p>
+                    <p id="annualTitle" class="text-lg font-semibold text-purple-400">-</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ranking Tab -->
+          <div id="ranking-tab" class="tab-content hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-6 mb-6">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900 mb-1">
+                    <i class="lucide lucide-medal inline mr-2 text-amber-400" style="stroke-width:1.5;"></i>
+                    Xếp Hạng Học Lực Trong Lớp
+                  </h3>
+                  <p class="text-sm text-slate-500">So sánh kết quả học tập với các bạn trong lớp</p>
+                </div>
+                <button id="loadRankingBtn"
+                  class="bg-amber-500 border border-amber-600 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg transition flex items-center gap-2">
+                  <i class="lucide lucide-refresh-cw" style="stroke-width:1.5;"></i>
+                  Tải Lại
+                </button>
+              </div>
+            </div>
+            <div id="rankingContent">
+              <div class="p-8 text-center text-slate-500">
+                <i class="lucide lucide-medal text-4xl mb-4 opacity-50" style="stroke-width:1;"></i>
+                <p>Đang tải xếp hạng...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule Tab -->
+          <div id="schedule-tab" class="tab-content hidden">
+            <div id="scheduleContent">
+              <div class="p-8 text-center text-slate-500">
+                <i class="lucide lucide-calendar text-4xl mb-4 opacity-50" style="stroke-width:1;"></i>
+                <p>Đang tải thời khóa biểu...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam Schedule Tab (Lịch Thi) -->
+          <div id="examschedule-tab" class="tab-content hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 overflow-hidden">
+              <div class="bg-gradient-to-r from-sky-500 to-emerald-500 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                    <i class="lucide lucide-clipboard-list text-white" style="stroke-width:1.5;"></i>
+                  </div>
+                  <div class="text-white">
+                    <h3 class="font-semibold text-lg">Lịch Thi</h3>
+                    <p class="text-sm text-sky-100">Xem lịch thi các kỳ thi trong năm học</p>
+                  </div>
+                </div>
+                <button onclick="exportStudentExamSchedule()"
+                  class="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition flex items-center gap-2">
+                  <i class="lucide lucide-printer w-4 h-4" style="stroke-width:1.5;"></i>
+                  In lịch thi
+                </button>
+              </div>
+              <div id="studentExamScheduleContent" class="p-6">
+                <div class="text-center py-8 text-slate-500">
+                  <i class="lucide lucide-loader-2 text-4xl mb-3 text-slate-300 animate-spin"
+                    style="stroke-width:1.5;"></i>
+                  <p>Đang tải lịch thi...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Analysis Tab -->
+          <div id="ai-analysis-tab" class="tab-content hidden">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-6 mb-6">
+              <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900 mb-1">
+                    <i class="lucide lucide-sparkles inline mr-2 text-purple-400" style="stroke-width:1.5;"></i>
+                    AI Phân Tích Kết Quả Học Tập
+                  </h3>
+                  <p class="text-sm text-slate-500">Sử dụng AI để phân tích điểm số và đưa ra lời khuyên cải thiện</p>
+                </div>
+                <button id="analyzeBtn"
+                  class="bg-gradient-to-r from-purple-500 to-pink-500 border border-purple-600 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-5 py-2.5 rounded-lg transition flex items-center gap-2">
+                  <i class="lucide lucide-wand-2" style="stroke-width:1.5;"></i>
+                  Phân Tích Ngay
+                </button>
+              </div>
+            </div>
+
+            <!-- Analysis Result -->
+            <div id="analysisResult" class="rounded-2xl border border-slate-200 bg-white/80 overflow-hidden">
+              <div class="p-8 text-center text-slate-500">
+                <i class="lucide lucide-brain text-4xl mb-4 opacity-50" style="stroke-width:1;"></i>
+                <p>Nhấn <strong>"Phân Tích Ngay"</strong> để AI đánh giá kết quả học tập của bạn</p>
+                <p class="text-xs text-slate-500 mt-2">AI sẽ phân tích điểm số từ tất cả các môn và đưa ra nhận xét chi
+                  tiết</p>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="mt-6 rounded-2xl border border-slate-200/50 bg-slate-50/30 p-4">
+              <h4 class="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
+                <i class="lucide lucide-lightbulb text-amber-400" style="stroke-width:1.5;"></i>
+                AI NTK sẽ giúp bạn:
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div class="flex items-start gap-2 text-slate-500">
+                  <span class="text-emerald-400">✓</span>
+                  <span>Phân tích điểm mạnh của bạn</span>
+                </div>
+                <div class="flex items-start gap-2 text-slate-500">
+                  <span class="text-amber-400">⚠</span>
+                  <span>Chỉ ra môn cần cải thiện</span>
+                </div>
+                <div class="flex items-start gap-2 text-slate-500">
+                  <span class="text-sky-400">💡</span>
+                  <span>Đưa ra lời khuyên cụ thể</span>
+                </div>
+              </div>
+            </div>
+          </div>
+      </main>
+    </div>
+
+    <!-- Update Request Modal -->
+    <div id="updateModal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div
+        class="bg-slate-50 border border-slate-200 rounded-2xl max-w-lg w-full shadow-xl max-h-[90vh] overflow-y-auto">
+        <div
+          class="border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-slate-50 z-10">
+          <h2 class="text-lg font-semibold text-slate-900">Yêu Cầu Cập Nhật Hồ Sơ</h2>
+          <button class="close-modal text-slate-500 hover:text-slate-700">
+            <i class="lucide lucide-x" style="stroke-width:1.5;"></i>
+          </button>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-500 mb-2">Loại yêu cầu</label>
+            <select id="updateType" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800">
+              <option value="profile">Cập nhật thông tin cá nhân</option>
+              <option value="grades">Phúc khảo điểm</option>
+              <option value="other">Khác</option>
+            </select>
+          </div>
+
+          <!-- Grade Review Fields (hidden by default) -->
+          <div id="gradeReviewFields" class="hidden space-y-4 p-4 bg-sky-50 border border-sky-200 rounded-xl">
+            <h4 class="font-medium text-sky-800 flex items-center gap-2">
+              <i class="lucide lucide-file-check" style="stroke-width:1.5;"></i>
+              Thông tin phúc khảo điểm
+            </h4>
+
+            <div>
+              <label class="block text-sm text-slate-600 mb-2">Môn học cần phúc khảo <span
+                  class="text-red-500">*</span></label>
+              <select id="reviewSubject"
+                class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800">
+                <option value="">-- Chọn môn học --</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-slate-600 mb-2">Học kỳ <span class="text-red-500">*</span></label>
+                <select id="reviewSemester"
+                  class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800">
+                  <option value="1">Học kỳ 1</option>
+                  <option value="2">Học kỳ 2</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-2">Loại điểm <span class="text-red-500">*</span></label>
+                <select id="reviewGradeType"
+                  class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800">
+                  <option value="oral">Miệng</option>
+                  <option value="fifteen">15 phút</option>
+                  <option value="one_period">1 tiết</option>
+                  <option value="midterm">Giữa kỳ</option>
+                  <option value="semester">Cuối kỳ</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="currentGradeDisplay" class="hidden p-3 bg-white border border-slate-200 rounded-lg">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-slate-600">Điểm hiện tại:</span>
+                <span id="reviewCurrentGradeValue" class="text-lg font-bold text-sky-600">--</span>
+              </div>
+              <p id="currentGradeNote" class="text-xs text-slate-400 mt-1"></p>
+            </div>
+            <input type="hidden" id="reviewCurrentGrade" value="">
+          </div>
+
+          <div>
+            <label class="block text-sm text-slate-500 mb-2">Lý do yêu cầu <span class="text-red-500">*</span></label>
+            <textarea id="updateReason" placeholder="Nêu rõ lý do phúc khảo hoặc thông tin cần cập nhật..." rows="4"
+              class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm text-slate-500 mb-2">Đính kèm minh chứng (tùy chọn)</label>
+            <div
+              class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-sky-400 transition cursor-pointer"
+              id="fileDropZone">
+              <input type="file" id="reviewAttachment" accept="image/*,.pdf,.doc,.docx" multiple class="hidden">
+              <i class="lucide lucide-upload-cloud text-3xl text-slate-400 mb-2" style="stroke-width:1;"></i>
+              <p class="text-sm text-slate-500">Kéo thả file vào đây hoặc <span class="text-sky-600 font-medium">chọn
+                  file</span></p>
+              <p class="text-xs text-slate-400 mt-1">Hỗ trợ: Ảnh, PDF, Word (tối đa 5MB)</p>
+            </div>
+            <div id="filePreviewList" class="mt-2 space-y-2"></div>
+          </div>
+        </div>
+        <div class="border-t border-slate-200 px-6 py-3 flex gap-2 justify-end sticky bottom-0 bg-slate-50">
+          <button
+            class="close-modal px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-200 transition">Hủy</button>
+          <button id="submitUpdateBtn"
+            class="px-4 py-2 rounded-lg bg-sky-600 border border-sky-600 text-white hover:bg-sky-700 transition flex items-center gap-2">
+            <i class="lucide lucide-send" style="stroke-width:1.5;"></i>
+            Gửi Yêu Cầu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Detail Modal -->
+    <div id="notificationModal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div class="bg-white border border-slate-200 rounded-2xl max-w-lg w-full shadow-xl">
+        <div class="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <h2 id="notificationModalTitle" class="text-lg font-semibold text-slate-900">Thông báo</h2>
+          <button class="close-notification-modal text-slate-500 hover:text-slate-700">
+            <i class="lucide lucide-x" style="stroke-width:1.5;"></i>
+          </button>
+        </div>
+        <div class="px-6 py-4">
+          <p id="notificationModalContent" class="text-slate-600 leading-relaxed"></p>
+          <p id="notificationModalTime" class="text-xs text-slate-400 mt-4"></p>
+        </div>
+        <div class="border-t border-slate-200 px-6 py-3 flex justify-end">
+          <button
+            class="close-notification-modal px-4 py-2 rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+  </div> <!-- end tab-container -->
+  </main>
+  </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div
+      class="bg-white border border-slate-100 rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-3 min-w-[280px]">
+      <div id="toastDot" class="h-2 w-2 rounded-full bg-danger animate-pulse"></div>
+      <span id="toastMessage" class="text-textDark font-medium"></span>
+    </div>
+  </div>
+
+  <!-- JS Modules -->
+  <script src="js/student-core.js"></script>
+  <script src="js/student-profile.js"></script>
+  <script src="js/student-grades.js"></script>
+  <script src="js/student-annual.js"></script>
+  <script src="js/student-ai-analysis.js"></script>
+  <script src="js/student-notifications.js"></script>
+  <script src="js/student-ranking.js"></script>
+  <script src="js/student-teachers.js"></script>
+  <script src="js/student-schedule.js"></script>
+  <script src="js/student-exam-schedule.js"></script>
+  <script src="js/student-init.js"></script>
+
+  <!-- AI Chat Widget -->
+  <script src="../ai-chat.js"></script>
+  <script>
+    // Mobile Sidebar Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebar = document.getElementById('sidebar');
+
+    // Create overlay if it doesn't exist
+    let overlay = document.getElementById('sidebarOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sidebarOverlay';
+      overlay.className = 'fixed inset-0 bg-black/50 z-40 hidden lg:hidden';
+      document.body.appendChild(overlay);
+    }
+
+    function toggleMobileMenu() {
+      const isHidden = sidebar.classList.contains('hidden');
+      if (isHidden) {
+        sidebar.classList.remove('hidden');
+        sidebar.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50', 'flex');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('hidden');
+        sidebar.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-50', 'flex');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
+    overlay?.addEventListener('click', toggleMobileMenu);
+
+    // Initialize AI Chat for Student
+    function startStudentAIChat() {
+      // Kiểm tra cả State.studentProfile và biến global studentProfile
+      const profile = (typeof State !== 'undefined' && State.studentProfile) ? State.studentProfile : (typeof studentProfile !== 'undefined' ? studentProfile : null);
+
+      if (profile) {
+        initAIChat({
+          role: 'student',
+          context: {
+            userName: profile.full_name,
+            studentCode: profile.student_code,
+            studentId: profile.id,
+            classId: profile.class_id,
+            className: profile.class_name
+          }
+        });
+      } else {
+        // Retry in 500ms if profile not loaded yet
+        setTimeout(startStudentAIChat, 500);
+      }
+    }
+
+    // Start after a short delay to allow modules to load
+    setTimeout(startStudentAIChat, 1000);
+  </script>
+</body>
+
+</html>
